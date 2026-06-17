@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TaskFlow — Task Management App</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0D1117;
+  --surface:#161B22;
+  --card:#1C2333;
+  --border:#30363D;
+  --blue:#58A6FF;
+  --blue-dim:#1F6FEB;
+  --green:#3FB950;
+  --yellow:#D29922;
+  --red:#F85149;
+  --purple:#BC8CFF;
+  --white:#E6EDF3;
+  --gray:#8B949E;
+  --gray2:#484F58;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--white);font-family:'Segoe UI',Inter,system-ui,sans-serif;min-height:100vh}
+
+/* AUTH SCREEN */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+.auth-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2.5rem;width:100%;max-width:400px}
+.auth-logo{text-align:center;margin-bottom:2rem}
+.auth-logo h1{font-size:1.8rem;font-weight:800;color:var(--blue);letter-spacing:-1px}
+.auth-logo p{color:var(--gray);font-size:.9rem;margin-top:.25rem}
+.auth-tabs{display:flex;background:var(--bg);border-radius:8px;padding:4px;margin-bottom:1.5rem}
+.auth-tab{flex:1;padding:.55rem;text-align:center;border-radius:6px;cursor:pointer;font-size:.88rem;font-weight:600;color:var(--gray);transition:all .2s}
+.auth-tab.active{background:var(--blue-dim);color:#fff}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.5px}
+.form-group input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;color:var(--white);font-size:.92rem;font-family:inherit;outline:none;transition:border .2s}
+.form-group input:focus{border-color:var(--blue)}
+.auth-btn{width:100%;padding:.85rem;background:var(--blue-dim);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;margin-top:.5rem}
+.auth-btn:hover{background:var(--blue);transform:translateY(-1px)}
+.auth-error{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:var(--red);padding:.75rem 1rem;border-radius:8px;font-size:.85rem;margin-bottom:1rem;display:none}
+
+/* APP */
+#app{display:none;min-height:100vh}
+
+/* NAVBAR */
+nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1.5rem;position:sticky;top:0;z-index:100}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px}
+.nav-logo{font-size:1.2rem;font-weight:800;color:var(--blue)}
+.nav-right{display:flex;align-items:center;gap:1rem}
+.nav-user{display:flex;align-items:center;gap:.6rem;color:var(--gray);font-size:.88rem}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--blue-dim);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#fff}
+.logout-btn{background:transparent;border:1px solid var(--border);color:var(--gray);padding:.4rem .9rem;border-radius:6px;font-size:.82rem;cursor:pointer;transition:all .2s;font-family:inherit}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* MAIN */
+main{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;display:flex;align-items:center;gap:1rem}
+.stat-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.stat-info .num{font-size:1.6rem;font-weight:800;line-height:1}
+.stat-info .lbl{font-size:.75rem;color:var(--gray);margin-top:.2rem}
+
+/* CONTROLS */
+.controls{display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center}
+.search-box{flex:1;min-width:200px;position:relative}
+.search-box input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.65rem 1rem .65rem 2.5rem;color:var(--white);font-size:.9rem;font-family:inherit;outline:none;transition:border .2s}
+.search-box input:focus{border-color:var(--blue)}
+.search-box::before{content:'🔍';position:absolute;left:.75rem;top:50%;transform:translateY(-50%);font-size:.85rem}
+.filter-select{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.65rem 1rem;color:var(--white);font-size:.88rem;font-family:inherit;outline:none;cursor:pointer}
+.add-btn{background:var(--blue-dim);color:#fff;border:none;border-radius:8px;padding:.65rem 1.25rem;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:.4rem;transition:all .2s;white-space:nowrap}
+.add-btn:hover{background:var(--blue)}
+
+/* KANBAN */
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem}
+.column{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem}
+.col-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.col-title{font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:.5rem}
+.col-count{background:var(--border);color:var(--gray);border-radius:100px;padding:.1rem .55rem;font-size:.75rem;font-weight:600}
+.task-list{display:flex;flex-direction:column;gap:.75rem;min-height:60px}
+
+/* TASK CARD */
+.task-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;cursor:pointer;transition:all .2s;position:relative}
+.task-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 6px 20px rgba(88,166,255,.1)}
+.task-priority{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.6rem}
+.p-high{background:rgba(248,81,73,.15);color:var(--red)}
+.p-medium{background:rgba(210,153,34,.15);color:var(--yellow)}
+.p-low{background:rgba(63,185,80,.15);color:var(--green)}
+.task-title{font-size:.92rem;font-weight:600;margin-bottom:.4rem;line-height:1.3}
+.task-desc{font-size:.8rem;color:var(--gray);margin-bottom:.75rem;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.task-meta{display:flex;align-items:center;justify-content:space-between}
+.task-due{font-size:.72rem;color:var(--gray);display:flex;align-items:center;gap:.3rem}
+.task-due.overdue{color:var(--red)}
+.task-actions{display:flex;gap:.4rem;opacity:0;transition:opacity .2s}
+.task-card:hover .task-actions{opacity:1}
+.task-btn{width:26px;height:26px;border-radius:5px;border:none;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.btn-edit{background:rgba(88,166,255,.15);color:var(--blue)}
+.btn-edit:hover{background:var(--blue);color:#fff}
+.btn-del{background:rgba(248,81,73,.15);color:var(--red)}
+.btn-del:hover{background:var(--red);color:#fff}
+.btn-move{background:rgba(63,185,80,.15);color:var(--green)}
+.btn-move:hover{background:var(--green);color:#fff}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.modal-title{font-size:1.1rem;font-weight:700}
+.close-btn{background:transparent;border:none;color:var(--gray);font-size:1.3rem;cursor:pointer;line-height:1;padding:.25rem}
+.close-btn:hover{color:var(--white)}
+.modal .form-group select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;color:var(--white);font-size:.92rem;font-family:inherit;outline:none}
+.modal .form-group textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;color:var(--white);font-size:.92rem;font-family:inherit;outline:none;resize:vertical;min-height:90px;transition:border .2s}
+.modal .form-group textarea:focus{border-color:var(--blue)}
+.modal-footer{display:flex;gap:.75rem;margin-top:1.5rem}
+.btn-cancel{flex:1;padding:.8rem;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-cancel:hover{border-color:var(--white);color:var(--white)}
+.btn-save{flex:2;padding:.8rem;background:var(--blue-dim);color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-save:hover{background:var(--blue)}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.9rem 1.25rem;font-size:.88rem;font-weight:500;z-index:999;transform:translateY(100px);opacity:0;transition:all .3s;display:flex;align-items:center;gap:.6rem}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:var(--green);color:var(--green)}
+.toast.error{border-color:var(--red);color:var(--red)}
+
+/* EMPTY */
+.empty{text-align:center;padding:2rem 1rem;color:var(--gray);font-size:.85rem}
+.empty-icon{font-size:2rem;margin-bottom:.5rem}
+
+@media(max-width:768px){
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .kanban{grid-template-columns:1fr}
+  .controls{flex-direction:column}
+  .search-box{width:100%}
+}
+@media(max-width:480px){
+  .stats-row{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <h1>TaskFlow</h1>
+      <p>Manage your tasks, effortlessly</p>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Login</div>
+      <div class="auth-tab" onclick="switchTab('register')">Register</div>
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <!-- Login -->
+    <div id="login-form">
+      <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"/></div>
+      <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••"/></div>
+      <button class="auth-btn" onclick="handleLogin()">Login →</button>
+    </div>
+    <!-- Register -->
+    <div id="register-form" style="display:none">
+      <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Prince Yadav"/></div>
+      <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com"/></div>
+      <div class="form-group"><label>Password</label><input type="password" id="reg-pass" placeholder="Min 6 characters"/></div>
+      <button class="auth-btn" onclick="handleRegister()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <nav>
+    <div class="nav-inner">
+      <div class="nav-logo">⚡ TaskFlow</div>
+      <div class="nav-right">
+        <div class="nav-user">
+          <div class="avatar" id="user-avatar">P</div>
+          <span id="user-name">User</span>
+        </div>
+        <button class="logout-btn" onclick="handleLogout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(88,166,255,.15)">📋</div>
+        <div class="stat-info"><div class="num" id="stat-total">0</div><div class="lbl">Total Tasks</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(210,153,34,.15)">🔄</div>
+        <div class="stat-info"><div class="num" id="stat-progress">0</div><div class="lbl">In Progress</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(63,185,80,.15)">✅</div>
+        <div class="stat-info"><div class="num" id="stat-done">0</div><div class="lbl">Completed</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(248,81,73,.15)">🔥</div>
+        <div class="stat-info"><div class="num" id="stat-overdue">0</div><div class="lbl">Overdue</div></div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <div class="search-box"><input type="text" id="search-input" placeholder="Search tasks..." oninput="renderTasks()"/></div>
+      <select class="filter-select" id="priority-filter" onchange="renderTasks()">
+        <option value="">All Priorities</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+      <button class="add-btn" onclick="openModal()">+ Add Task</button>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="kanban">
+      <div class="column">
+        <div class="col-header">
+          <div class="col-title">📌 To Do <span class="col-count" id="count-todo">0</span></div>
+        </div>
+        <div class="task-list" id="col-todo"></div>
+      </div>
+      <div class="column">
+        <div class="col-header">
+          <div class="col-title">🔄 In Progress <span class="col-count" id="count-progress">0</span></div>
+        </div>
+        <div class="task-list" id="col-progress"></div>
+      </div>
+      <div class="column">
+        <div class="col-header">
+          <div class="col-title">✅ Done <span class="col-count" id="count-done">0</span></div>
+        </div>
+        <div class="task-list" id="col-done"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Add New Task</div>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group"><label>Task Title *</label><input type="text" id="task-title" placeholder="Enter task title..."/></div>
+    <div class="form-group"><label>Description</label><textarea id="task-desc" placeholder="Describe the task..."></textarea></div>
+    <div class="form-group"><label>Priority</label>
+      <select id="task-priority">
+        <option value="low">Low</option>
+        <option value="medium" selected>Medium</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Status</label>
+      <select id="task-status">
+        <option value="todo">To Do</option>
+        <option value="progress">In Progress</option>
+        <option value="done">Done</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Due Date</label><input type="date" id="task-due"/></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveTask()">Save Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+let currentUser = null;
+let tasks = [];
+let editingId = null;
+
+// ── AUTH ──
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('login-form').style.display = tab==='login'?'block':'none';
+  document.getElementById('register-form').style.display = tab==='register'?'block':'none';
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem('tf_users') || '[]'); } catch { return []; }
+}
+function saveUsers(u) { localStorage.setItem('tf_users', JSON.stringify(u)); }
+
+function handleRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  if (!name || !email || !pass) return showAuthError('All fields are required.');
+  if (pass.length < 6) return showAuthError('Password must be at least 6 characters.');
+  const users = getUsers();
+  if (users.find(u => u.email === email)) return showAuthError('Email already registered.');
+  users.push({ name, email, pass });
+  saveUsers(users);
+  showToast('Account created! Please login.', 'success');
+  switchTab('login');
+}
+
+function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  if (!email || !pass) return showAuthError('Please fill all fields.');
+  const users = getUsers();
+  const user = users.find(u => u.email === email && u.pass === pass);
+  if (!user) return showAuthError('Invalid email or password.');
+  currentUser = user;
+  loadUserTasks();
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('user-name').textContent = user.name.split(' ')[0];
+  document.getElementById('user-avatar').textContent = user.name[0].toUpperCase();
+  renderTasks();
+}
+
+function handleLogout() {
+  currentUser = null;
+  tasks = [];
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+// ── TASKS STORAGE ──
+function loadUserTasks() {
+  try { tasks = JSON.parse(localStorage.getItem('tf_tasks_' + currentUser.email) || '[]'); } catch { tasks = []; }
+}
+function saveTasks() {
+  localStorage.setItem('tf_tasks_' + currentUser.email, JSON.stringify(tasks));
+}
+
+// ── MODAL ──
+function openModal(id = null) {
+  editingId = id;
+  document.getElementById('modal-title').textContent = id ? 'Edit Task' : 'Add New Task';
+  if (id) {
+    const t = tasks.find(t => t.id === id);
+    document.getElementById('task-title').value = t.title;
+    document.getElementById('task-desc').value = t.desc || '';
+    document.getElementById('task-priority').value = t.priority;
+    document.getElementById('task-status').value = t.status;
+    document.getElementById('task-due').value = t.due || '';
+  } else {
+    document.getElementById('task-title').value = '';
+    document.getElementById('task-desc').value = '';
+    document.getElementById('task-priority').value = 'medium';
+    document.getElementById('task-status').value = 'todo';
+    document.getElementById('task-due').value = '';
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+function saveTask() {
+  const title = document.getElementById('task-title').value.trim();
+  if (!title) { showToast('Task title is required!', 'error'); return; }
+  const task = {
+    id: editingId || Date.now().toString(),
+    title,
+    desc: document.getElementById('task-desc').value.trim(),
+    priority: document.getElementById('task-priority').value,
+    status: document.getElementById('task-status').value,
+    due: document.getElementById('task-due').value,
+    createdAt: editingId ? (tasks.find(t=>t.id===editingId)||{}).createdAt : new Date().toISOString()
+  };
+  if (editingId) {
+    tasks = tasks.map(t => t.id === editingId ? task : t);
+    showToast('Task updated!', 'success');
+  } else {
+    tasks.push(task);
+    showToast('Task added!', 'success');
+  }
+  saveTasks();
+  closeModal();
+  renderTasks();
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  saveTasks();
+  renderTasks();
+  showToast('Task deleted.', 'error');
+}
+
+function moveTask(id) {
+  const t = tasks.find(t => t.id === id);
+  const order = ['todo','progress','done'];
+  const next = order[(order.indexOf(t.status)+1) % order.length];
+  t.status = next;
+  saveTasks();
+  renderTasks();
+  const labels = {todo:'To Do',progress:'In Progress',done:'Done'};
+  showToast('Moved to ' + labels[next], 'success');
+}
+
+// ── RENDER ──
+function renderTasks() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const pf = document.getElementById('priority-filter').value;
+  const filtered = tasks.filter(t =>
+    (!q || t.title.toLowerCase().includes(q) || (t.desc||'').toLowerCase().includes(q)) &&
+    (!pf || t.priority === pf)
+  );
+
+  const cols = {todo:[],progress:[],done:[]};
+  filtered.forEach(t => cols[t.status]?.push(t));
+
+  ['todo','progress','done'].forEach(status => {
+    const el = document.getElementById('col-'+status);
+    const list = cols[status];
+    document.getElementById('count-'+status).textContent = list.length;
+    if (!list.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">🗂️</div>No tasks here</div>';
+      return;
+    }
+    el.innerHTML = list.map(t => {
+      const isOverdue = t.due && new Date(t.due) < new Date() && t.status !== 'done';
+      const nextLabel = {todo:'▶',progress:'✅',done:'🔄'}[t.status];
+      return `<div class="task-card" onclick="openModal('${t.id}')">
+        <div class="task-priority p-${t.priority}">${t.priority}</div>
+        <div class="task-title">${t.title}</div>
+        ${t.desc ? `<div class="task-desc">${t.desc}</div>` : ''}
+        <div class="task-meta">
+          <div class="task-due ${isOverdue?'overdue':''}">${t.due ? '📅 '+t.due+(isOverdue?' (Overdue)':'') : ''}</div>
+          <div class="task-actions" onclick="event.stopPropagation()">
+            <button class="task-btn btn-edit" onclick="openModal('${t.id}')" title="Edit">✏️</button>
+            <button class="task-btn btn-move" onclick="moveTask('${t.id}')" title="Move">${nextLabel}</button>
+            <button class="task-btn btn-del" onclick="deleteTask('${t.id}')" title="Delete">🗑️</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  });
+
+  // Stats
+  const today = new Date();
+  document.getElementById('stat-total').textContent = tasks.length;
+  document.getElementById('stat-progress').textContent = tasks.filter(t=>t.status==='progress').length;
+  document.getElementById('stat-done').textContent = tasks.filter(t=>t.status==='done').length;
+  document.getElementById('stat-overdue').textContent = tasks.filter(t=>t.due&&new Date(t.due)<today&&t.status!=='done').length;
+}
+
+// ── TOAST ──
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type==='success'?'✓ ':'✕ ') + msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Close modal on overlay click
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+// Check if already logged in (demo: auto-fill)
+document.getElementById('login-email').addEventListener('keydown', e => { if(e.key==='Enter') handleLogin(); });
+document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') handleLogin(); });
+</script>
+</body>
+</html>
